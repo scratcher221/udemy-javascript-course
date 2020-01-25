@@ -9,7 +9,7 @@ GAME RULES:
 
 */
 
-var scores, roundScore, activePlayer, gamePlaying
+var scores, roundScore, activePlayer, gamePlaying, prevDice
 gamePlaying = false
 init()
 
@@ -17,23 +17,27 @@ document.querySelector('.btn-roll').addEventListener('click', function() {
     if (gamePlaying) {
         // 1. Generate random number
         var dice = Math.ceil(Math.random() * 6)
-
+        var twoSix = (prevDice && prevDice === 6 && dice === 6)
+        if (twoSix) {
+            console.log('Rolled two 6\'s in a row!')
+            scores[activePlayer] = 0
+            // Update the UI
+            document.querySelector(`#score-${activePlayer}`).textContent = scores[activePlayer]
+        }
+        prevDice = dice
         // 2. Display the result
         var diceDOM = document.querySelector('.dice')
         diceDOM.style.display = 'block'
         diceDOM.src = `dice-${dice}.png`
         document.querySelector(`#current-${activePlayer}`).textContent = dice
 
-        // 3. Update the round score IF the rolled number was NOT a 1
-        if (dice > 1) {
+        // 3. Update the round score IF the rolled number was NOT a 1 and not two 6's in a row
+        if (dice > 1 && !twoSix) {
             // Add score
             roundScore += dice
             document.querySelector('#current-' + activePlayer).textContent = roundScore
         } else {
-            roundScore = 0
-            document.querySelector('#current-' + activePlayer).textContent = roundScore
-            // Next player
-            nextPlayer()
+            resetRoundScore()
         }
     }
 })
@@ -52,9 +56,7 @@ document.querySelector('.btn-hold').addEventListener('click', function() {
             document.querySelector(`.player-${activePlayer}-panel`).classList.add('winner')
             document.querySelector(`.player-${activePlayer}-panel`).classList.remove('active')
         } else {
-            // Next player
-            roundScore = 0
-            nextPlayer()
+            resetRoundScore()
         }
     }
 })
@@ -80,7 +82,15 @@ function init() {
     document.querySelector('.player-0-panel').classList.add('active')
 }
 
+function resetRoundScore() {
+    roundScore = 0
+    document.querySelector('#current-' + activePlayer).textContent = roundScore
+    // Next player
+    nextPlayer()
+}
+
 function nextPlayer() {
+    prevDice = undefined
     document.querySelector(`.player-${activePlayer}-panel`).classList.remove('active')
     activePlayer === 0 ? activePlayer = 1 : activePlayer = 0
     document.querySelector(`.player-${activePlayer}-panel`).classList.add('active')
@@ -89,3 +99,10 @@ function nextPlayer() {
 }
 
 document.querySelector('.btn-new').addEventListener('click', init)
+
+/*
+Coding Challenges
+1. A player looses their entire score when they roll two 6 in a row. After that, it's the next player's turn.
+2. Allow the players to change the winning score from 100 to an arbitrary value via an HTML input field.
+3. Add a second dice to the game. When one of them is 1, the current player loses their current score.
+*/
